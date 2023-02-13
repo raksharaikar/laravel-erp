@@ -33,24 +33,5 @@
     </div>
 
 
-    {{-- <table id="bom-table" class="table table-bordered table-striped ">
-        <thead>
-            <tr data-optionid="2" class="parent-part">
-                <th scope="col">Bom ID</th>
-                <th scope="col">Part ID</th>
-                <th scope="col">Semi part BOM version</th>
-                <th>Expand/Collapse</th>
-            </tr>
-        </thead>
-
-
-        <tbody>
-            <tr data-optionid="2" class="parent-part" style="padding-left: 20px;">
-
-                @foreach ($bom->childparts as $bom)
-                    @include('partials.view', ['$bom' => $bom, 'indent' => 20, 'level' => 20])
-                @endforeach
-            </tr>
-        </tbody>
-    </table> --}}
+    
 @endsection

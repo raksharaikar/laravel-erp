@@ -35,30 +35,26 @@ class BomController extends Controller
         })->get();
         return view('boms.index', compact('boms'));
 
-
-
-
     }
 
-    
-   
-    public function destroy($bom) {
+
+
+    public function destroy($bom)
+    {
         return $this->deleteBOMItem($bom);
     }
-    
-    
-    public function deleteBOMItem($bom) {
-         Part::where('id', $bom)->delete();
+
+
+    public function deleteBOMItem($bom)
+    {
+        Part::where('id', $bom)->delete();
         return redirect()->back()->with('success', 'BOM item deleted successfully!');
     }
-    
-    
-    
-     
+
 
     public function show($bom)
     {
-        
+
         return view('boms.show', compact('id'));
     }
 
@@ -82,75 +78,28 @@ class BomController extends Controller
     }
 
 
-
-    //   public function showParts($partID, $semiPartVesion) {
-    //     $part = Part::find($partID);
-    //     $this->loopChildParts($part, $semiPartVesion);
-    //   }
-
-    //   private function loopChildParts($part, $semiPartVesion)  {
-    //     $boms = Part::where('partID', $part->partID)
-    //     ->where('bom_version', $semiPartVesion)
-    //     ->with(['childparts' => function ($query) use ($semiPartVesion) {
-    //       $query->where('bom_version', $semiPartVesion);
-    //     }])
-    //     ->get();
-
-    //     return $boms;
-
-    //   foreach($boms as $bom) {
-    //     if(!empty($bom->childparts)) {
-    //       $this->getChildParts($bom, $semiPartVesion);
-    //     }
-    //   }
-    //   }
-
-    //   public function showParts($partID, $semiPartVesion) {
-    //     $boms = Part::where('partID', $partID)
-    //       ->where('bom_version', $semiPartVesion)
-    //       ->with(['childparts' => function ($query) use ($semiPartVesion) {
-    //         $query->where('bom_version', $semiPartVesion);
-    //       }])
-    //       ->get();
-
-    //     $allChildParts = [];
-    //     $this->loopChildParts($boms, $allChildParts);
-
-    //     return $allChildParts;
-    //   }
-
-    //   private function loopChildParts($childParts, &$allChildParts) {
-    //     foreach ($childParts as $childPart) {
-    //       $allChildParts[] = $childPart;
-
-    //       if (!empty($childPart->childparts)) {
-    //         $this->loopChildParts($childPart->childparts, $allChildParts);
-    //       }
-    //     }
-    //   }
-
-
-    //   public function getChildParts($part, $semiPartVesion) {
-    //     $boms = Part::where('partID', $part)
-    //       ->where('bom_version', $semiPartVesion)
-
-    //       ->get();
-
-    //       return ($boms);
-
-    // foreach($boms as $bom) {
-    //   if(!empty($bom->childparts)) {
-    //     $this->getChildParts($bom, $semiPartVesion);
-    //   } 
-    //   else{
-    //         break;
-    //   }
-    // }
-    //  }
-
     public function showCompareForm()
     {
         return view('boms.compare');
+    }
+
+
+    public function recursiveCheck($subChildpart, &$boms1Data)
+    {
+        if (count($subChildpart->childparts) > 0) {
+            foreach ($subChildpart->childparts as $subsubChildpart) {
+                if (array_key_exists($subsubChildpart->partID, $boms1Data)) {
+                    $boms1Data[$subsubChildpart->partID]['quantity'] += $subsubChildpart->quantity;
+                } else {
+                    $boms1Data[$subsubChildpart->partID] = [
+                        'partID' => $subsubChildpart->partID,
+                        'part_name' => $subsubChildpart->part_name,
+                        'quantity' => $subsubChildpart->quantity
+                    ];
+                }
+                $this->recursiveCheck($subsubChildpart, $boms1Data);
+            }
+        }
     }
 
     public function compareBoms(Request $request)
@@ -159,80 +108,48 @@ class BomController extends Controller
         $bom_version_1 = $request->input('bom_version_1');
         $bom_version_2 = $request->input('bom_version_2');
 
+
+
+        function getChildParts2($query, $bom_version)
+        {
+            $query->where('bom_version', $bom_version)
+                ->with([
+                    'childparts' => function ($query) use ($bom_version) {
+                        getChildParts2($query, $bom_version);
+                    }
+                ]);
+        }
+
         $boms1 = Part::where('partID', $parentID)
             ->where('bom_version', $bom_version_1)
             ->with([
                 'childparts' => function ($query) use ($bom_version_1) {
-                    $query->where('bom_version', $bom_version_1)
-                        ->with([
-                            'childparts' => function ($query) use ($bom_version_1) {
-                                        $query->where('bom_version', $bom_version_1)
-                                            ->with([
-                                                'childparts' => function ($query) use ($bom_version_1) {
-                                                                            $query->where('bom_version', $bom_version_1);
-                                                                        }
-                                            ]);
-                                    }
-                        ]);
+                    getChildParts2($query, $bom_version_1);
                 }
             ])
             ->get();
+
+
+        function getChildParts1($query, $bom_version_2)
+        {
+            $query->where('bom_version', $bom_version_2)
+                ->with([
+                    'childparts' => function ($query) use ($bom_version_2) {
+                        getChildParts1($query, $bom_version_2);
+                    }
+                ]);
+        }
 
         $boms2 = Part::where('partID', $parentID)
             ->where('bom_version', $bom_version_2)
             ->with([
                 'childparts' => function ($query) use ($bom_version_2) {
-                    $query->where('bom_version', $bom_version_2)
-                        ->with([
-                            'childparts' => function ($query) use ($bom_version_2) {
-                                        $query->where('bom_version', $bom_version_2)
-                                            ->with([
-                                                'childparts' => function ($query) use ($bom_version_2) {
-                                                                            $query->where('bom_version', $bom_version_2);
-                                                                        }
-                                            ]);
-                                    }
-                        ]);
+                    getChildParts1($query, $bom_version_2);
                 }
             ])
             ->get();
 
-        $boms1Data = [];
-        $boms2Data = [];
 
-        foreach ($boms1 as $bom1) {
-            $boms1Data[$bom1->partID] = [
-                'partID' => $bom1->partID,
-                'part_name' => $bom1->part_name,
-                'quantity' => $bom1->quantity
-            ];
-            if (count($bom1->childparts) > 0) {
-                foreach ($bom1->childparts as $childpart) {
-                    if (array_key_exists($childpart->partID, $boms1Data)) {
-                        $boms1Data[$childpart->partID]['quantity'] += $childpart->quantity;
-                    } else {
-                        $boms1Data[$childpart->partID] = [
-                            'partID' => $childpart->partID,
-                            'part_name' => $childpart->part_name,
-                            'quantity' => $childpart->quantity
-                        ];
-                    }
-                    if (count($childpart->childparts) > 0) {
-                        foreach ($childpart->childparts as $subChildpart) {
-                            if (array_key_exists($subChildpart->partID, $boms1Data)) {
-                                $boms1Data[$subChildpart->partID]['quantity'] += $subChildpart->quantity;
-                            } else {
-                                $boms1Data[$subChildpart->partID] = [
-                                    'partID' => $subChildpart->partID,
-                                    'part_name' => $subChildpart->part_name,
-                                    'quantity' => $subChildpart->quantity
-                                ];
-                            }
-                        }
-                    }
-                }
-            }
-        }
 
         $boms1Data = [];
         $boms2Data = [];
@@ -265,11 +182,19 @@ class BomController extends Controller
                                     'quantity' => $subChildpart->quantity
                                 ];
                             }
+                            if (count($subChildpart->childparts) > 0) {
+                                $this->recursiveCheck($subChildpart, $boms1Data);
+                            }
                         }
                     }
                 }
             }
         }
+
+
+
+
+
 
         foreach ($boms2 as $bom1) {
             $boms2Data[$bom1->partID] = [
@@ -299,13 +224,18 @@ class BomController extends Controller
                                     'quantity' => $subChildpart->quantity
                                 ];
                             }
+
+                            if (count($subChildpart->childparts) > 0) {
+                                $this->recursiveCheck($subChildpart, $boms1Data);
+                            }
                         }
                     }
                 }
             }
         }
 
-        return view('boms.compare', compact('boms1', 'boms2', 'boms1Data', 'boms2Data'));
+ 
+    return view('boms.compare', compact('boms1', 'boms2', 'boms1Data', 'boms2Data'));
 
     }
 
@@ -316,21 +246,22 @@ class BomController extends Controller
 
 
 
+
+        function getChildParts($query, $bom_version)
+        {
+            $query->where('bom_version', $bom_version)
+                ->with([
+                    'childparts' => function ($query) use ($bom_version) {
+                        getChildParts($query, $bom_version);
+                    }
+                ]);
+        }
+
         $boms = Part::where('partID', $partID)
             ->where('bom_version', $bomVersion)
             ->with([
                 'childparts' => function ($query) use ($bomVersion) {
-                    $query->where('bom_version', $bomVersion)
-                        ->with([
-                            'childparts' => function ($query) use ($bomVersion) {
-                                        $query->where('bom_version', $bomVersion)
-                                            ->with([
-                                                'childparts' => function ($query) use ($bomVersion) {
-                                                                            $query->where('bom_version', $bomVersion);
-                                                                        }
-                                            ]);
-                                    }
-                        ]);
+                    getChildParts($query, $bomVersion);
                 }
             ])
             ->get();
@@ -345,9 +276,9 @@ class BomController extends Controller
 
     public function import(Request $request)
     {
-         
 
-        
+
+
 
         $file = $request->file('file');
         $fileName = time() . '-' . $file->getClientOriginalName();
@@ -355,22 +286,22 @@ class BomController extends Controller
 
         $path = storage_path('app\public\files\\' . $fileName);
 
-      //  $file = $request->file('file');
-       
+        //  $file = $request->file('file');
+
 
         // Read the data from the Excel sheet and store it in an array
-       // $filePath = Storage::disk('public')->path('bom.xlsx');
-       $spreadsheet = IOFactory::load($path);
+        // $filePath = Storage::disk('public')->path('bom.xlsx');
+        $spreadsheet = IOFactory::load($path);
 
-          $worksheet = $spreadsheet->getActiveSheet();
+        $worksheet = $spreadsheet->getActiveSheet();
         $rows = $worksheet->toArray();
 
         unset($rows[0]);
 
 
-         $bomData = [];
+        $bomData = [];
 
-        
+
         foreach ($rows as $row) {
 
 
@@ -407,11 +338,6 @@ class BomController extends Controller
                     ]
                 );
                 $bom->save();
-
-               
-
- 
-
 
             }
         });

@@ -52,6 +52,16 @@
                                 </li>
                             @endif
                         @else
+                            
+                            <li class="d-flex align-items-center "><a style="margin-right:30px;" href="{{ route('boms.store') }}" class="link">View BOM list</a> 
+                             
+                            </li>   
+                            <li class="d-flex align-items-center mr-3"><a style="margin-right:30px;" href="{{ route('boms.import') }}" class="link">Import BOM</a> 
+                             
+                            </li>  
+                            <li class="d-flex align-items-center mr-3">   <a style="margin-right:30px;" href="{{ route('compare-boms') }}" class="link">Compare BOMs</a>
+                             
+                            </li>  
                             <li class="nav-item dropdown">
                                 <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
                                     {{ Auth::user()->name }}

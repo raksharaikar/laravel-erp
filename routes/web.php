@@ -31,7 +31,7 @@ Route::get('/boms/import', 'App\Http\Controllers\BomController@importForm')->nam
 Route::post('/boms/import', [App\Http\Controllers\BomController::class, 'import'])->name('boms.import');
 //Route::delete('/boms', [App\Http\Controllers\BomController::class, 'destroy'])->name('boms.destroy');
 //Route::delete('boms/{id}', [App\Http\Controllers\BomController::class, 'destroy']);
-Route::resource('boms', 'App\Http\Controllers\BomController');;
+Route::resource('boms', 'App\Http\Controllers\BomController');
 Auth::routes();
 
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
