@@ -1,4 +1,4 @@
 ## How to run laravel-erp
 
-- composer update -lock
+- composer update --lock
 - php artisan serve
